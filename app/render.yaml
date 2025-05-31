@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: tissue-culture-lab
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: wsgi.py
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true 
