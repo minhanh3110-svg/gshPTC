@@ -1,5 +1,6 @@
 from flask import Flask, request, g, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_limiter import Limiter
@@ -13,6 +14,7 @@ from flask_babel import Babel
 
 # Initialize extensions
 db = SQLAlchemy()
+migrate = Migrate()
 login_manager = LoginManager()
 mail = Mail()
 limiter = Limiter(key_func=get_remote_address)
@@ -24,6 +26,7 @@ def create_app(config_class=Config):
 
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     mail.init_app(app)
     limiter.init_app(app)
@@ -40,7 +43,7 @@ def create_app(config_class=Config):
     
     # Configure logging to use UTF-8
     logging.basicConfig(encoding='utf-8')
-    file_handler = RotatingFileHandler('logs/app.log', maxBytes=10240, backupCount=10, encoding='utf-8')
+    file_handler = RotatingFileHandler('logs/gshptc.log', maxBytes=10240, backupCount=10, encoding='utf-8')
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
     ))
@@ -56,17 +59,17 @@ def create_app(config_class=Config):
     app.logger.addHandler(file_handler)
     app.logger.addHandler(console_handler)
     app.logger.setLevel(logging.INFO)
-    app.logger.info('Khởi động ứng dụng')
+    app.logger.info('GSHPTC startup')
 
     # Register blueprints
-    from .routes.main import main as main_blueprint
-    app.register_blueprint(main_blueprint)
+    from .routes.main import bp as main_bp
+    app.register_blueprint(main_bp)
 
-    from .routes.auth import auth as auth_blueprint
-    app.register_blueprint(auth_blueprint, url_prefix='/auth')
+    from .routes.auth import bp as auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    from .errors import errors as errors_blueprint
-    app.register_blueprint(errors_blueprint)
+    from app.errors import bp as errors_bp
+    app.register_blueprint(errors_bp)
 
     # User loader
     from .models import User
@@ -93,5 +96,24 @@ def create_app(config_class=Config):
         
         # Get best matching language from headers
         return request.accept_languages.best_match(app.config['LANGUAGES'])
+
+    if not app.debug and not app.testing:
+        if app.config['MAIL_SERVER']:
+            import logging
+            from logging.handlers import SMTPHandler
+            credentials = None
+            if app.config['MAIL_USERNAME'] or app.config['MAIL_PASSWORD']:
+                credentials = (app.config['MAIL_USERNAME'], 
+                             app.config['MAIL_PASSWORD'])
+            secure = None
+            if app.config['MAIL_USE_TLS']:
+                secure = ()
+            mail_handler = SMTPHandler(
+                mailhost=(app.config['MAIL_SERVER'], app.config['MAIL_PORT']),
+                fromaddr='no-reply@' + app.config['MAIL_SERVER'],
+                toaddrs=app.config['ADMINS'], subject='GSHPTC Failure',
+                credentials=credentials, secure=secure)
+            mail_handler.setLevel(logging.ERROR)
+            app.logger.addHandler(mail_handler)
 
     return app
