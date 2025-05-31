@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="p-5 mb-4 bg-light rounded-3">
+        <div class="container-fluid py-5">
+            <h1 class="display-5 fw-bold">Hệ thống Quản lý Phòng Nuôi cấy Mô</h1>
+            <p class="col-md-8 fs-4">Quản lý hiệu quả quy trình nuôi cấy mô thực vật, theo dõi môi trường và ghi nhận kết quả.</p>
+        </div>
+    </div>
+
+    <div class="row align-items-md-stretch">
+        <div class="col-md-6 mb-4">
+            <div class="h-100 p-5 bg-primary text-white rounded-3">
+                <h2>Quản lý Nuôi cấy</h2>
+                <p>Theo dõi và quản lý các mẫu nuôi cấy, ghi nhận sự phát triển và tình trạng nhiễm.</p>
+                <a href="{{ url_for('main.cultures') }}" class="btn btn-outline-light">Xem mẫu nuôi cấy</a>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="h-100 p-5 bg-success text-white rounded-3">
+                <h2>Môi trường Nuôi cấy</h2>
+                <p>Chuẩn bị và theo dõi môi trường nuôi cấy, quản lý công thức và quy trình.</p>
+                <a href="{{ url_for('main.media_preparation') }}" class="btn btn-outline-light">Quản lý môi trường</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row align-items-md-stretch">
+        <div class="col-md-6 mb-4">
+            <div class="h-100 p-5 bg-warning text-dark rounded-3">
+                <h2>Giám sát Môi trường</h2>
+                <p>Theo dõi các thông số môi trường trong phòng nuôi cấy: nhiệt độ, độ ẩm, ánh sáng.</p>
+                <a href="{{ url_for('main.environment_monitoring') }}" class="btn btn-outline-dark">Xem thông số</a>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="h-100 p-5 bg-info text-white rounded-3">
+                <h2>Báo cáo & Thống kê</h2>
+                <p>Xem báo cáo tổng hợp về tình hình nuôi cấy, tỷ lệ thành công và các chỉ số quan trọng.</p>
+                <a href="#" class="btn btn-outline-light">Xem báo cáo</a>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Hoạt động gần đây</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Mã mẫu</th>
+                                    <th>Hoạt động</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for culture in current_user.cultures.order_by(Culture.start_date.desc()).limit(5) %}
+                                <tr>
+                                    <td>{{ culture.start_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>{{ culture.code }}</td>
+                                    <td>{{ culture.plant_name }}</td>
+                                    <td>
+                                        <span class="badge {% if culture.status == 'active' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ culture.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
